@@ -8,6 +8,7 @@ from langchain.schema import Document
 from sqlalchemy.orm import Session
 
 from backend.models.document import Chunk, ContentType, Document as DocModel, DocumentStatus
+from backend.services.bm25_indexer import build_bm25_index
 from backend.services.chunker import split_documents
 from backend.services.embedder import embed_texts
 from backend.services.extractor import get_extractor
@@ -91,6 +92,9 @@ def process_document(doc_id: str, db: Session) -> None:
 
         with open(os.path.join(index_dir, "index.pkl"), "wb") as f:
             pickle.dump(id_map, f)
+
+        # BM25 인덱스 생성
+        build_bm25_index(doc_id, texts)
 
         doc_record.index_path = index_dir
         doc_record.status = DocumentStatus.READY
