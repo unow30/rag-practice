@@ -74,12 +74,23 @@ async def upload_documents(
 
     os.makedirs(DOCUMENTS_DIR, exist_ok=True)
     created_docs = []
+    duplicate_docs = []
 
     for file in files:
         content = await file.read()
         size = len(content)
 
         _validate_pdf(file, size)
+
+        file_hash = hashlib.sha256(content).hexdigest()
+        existing = db.query(Document).filter(Document.file_hash == file_hash).first()
+        if existing:
+            duplicate_docs.append({
+                "id": existing.id,
+                "name": file.filename,
+                "message": f"이미 업로드된 문서입니다: {file.filename}",
+            })
+            continue
 
         import uuid
         doc_id = str(uuid.uuid4())
@@ -88,19 +99,6 @@ async def upload_documents(
 
         with open(dest_path, "wb") as f:
             f.write(content)
-
-        file_hash = hashlib.sha256(content).hexdigest()
-
-        existing = db.query(Document).filter(Document.file_hash == file_hash).first()
-        if existing:
-            os.remove(dest_path)
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "error": "DUPLICATE_FILE",
-                    "message": f"이미 업로드된 문서입니다: {file.filename}",
-                },
-            )
 
         doc = Document(
             id=doc_id,
@@ -117,7 +115,7 @@ async def upload_documents(
         background_tasks.add_task(_process_document_background, doc_id)
         created_docs.append(doc.to_dict())
 
-    return {"documents": created_docs}
+    return {"documents": created_docs, "duplicates": duplicate_docs}
 
 
 @router.get("")
