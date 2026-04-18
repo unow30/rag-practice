@@ -85,11 +85,11 @@
 **의존성**: T-03  
 **산출물**: `backend/services/extractor.py`
 
-- [ ] `BaseExtractor` 인터페이스 정의 (`extract(file_path, doc_id) -> list[Document]`)
-- [ ] `PyMuPDFExtractor` 구현 (v0 베이스라인)
+- [x] `BaseExtractor` 인터페이스 정의 (`extract(file_path, doc_id) -> list[Document]`)
+- [x] `PyMuPDFExtractor` 구현 (v0 베이스라인)
   - `PyMuPDFLoader`로 페이지별 텍스트 추출
   - 이미지 기반 PDF 감지 → "이미지 기반 PDF는 현재 지원되지 않습니다" 오류
-- [ ] **메타데이터 필수 부착**:
+- [x] **메타데이터 필수 부착**:
   ```python
   doc.metadata = {
       "source":  file_path,
@@ -99,8 +99,8 @@
       "version": None,
   }
   ```
-- [ ] Document.status → EXTRACTING 업데이트
-- [ ] 추출 실패 시 status → FAILED, error_message 저장
+- [x] Document.status → EXTRACTING 업데이트
+- [x] 추출 실패 시 status → FAILED, error_message 저장
 
 ---
 
