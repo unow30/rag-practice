@@ -64,6 +64,16 @@ def status_badge(status: str) -> str:
     return badges.get(status, status)
 
 
+def _doc_name_html(name: str, max_len: int = 25) -> str:
+    """긴 문서명은 생략(…)하고, 마우스 호버 시 전체명을 tooltip으로 표시한다."""
+    safe = name.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    if len(name) <= max_len:
+        return f"<b>{safe}</b>"
+    short = name[:max_len] + "…"
+    short_safe = short.replace("&", "&amp;").replace("<", "&lt;")
+    return f'<span title="{safe}" style="cursor:default"><b>{short_safe}</b></span>'
+
+
 # ── 사이드바 ─────────────────────────────────────────────────────
 with st.sidebar:
     st.title("📄 문서 관리")
@@ -118,11 +128,12 @@ with st.sidebar:
         for doc in docs:
             col1, col2 = st.columns([4, 1])
             with col1:
-                st.caption(
-                    f"**{doc['name']}**  \n"
-                    f"{status_badge(doc['status'])} · "
+                st.markdown(
+                    f"{_doc_name_html(doc['name'])}  \n"
+                    f"<small>{status_badge(doc['status'])} · "
                     f"{doc.get('page_count') or '?'} 페이지 · "
-                    f"{round(doc['size_bytes'] / 1024 / 1024, 1)} MB"
+                    f"{round(doc['size_bytes'] / 1024 / 1024, 1)} MB</small>",
+                    unsafe_allow_html=True,
                 )
             with col2:
                 if st.button("🗑", key=f"del_{doc['id']}"):
