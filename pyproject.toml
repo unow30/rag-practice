@@ -1,0 +1,22 @@
+[project]
+name = "rag-practice"
+version = "0.1.0"
+requires-python = ">=3.13"
+
+[tool.poe.tasks]
+# 서버 실행
+start    = "uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+dev      = "uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"
+
+# 프론트엔드
+frontend = "streamlit run frontend/app.py"
+
+# 테스트
+test     = "pytest backend/tests/ -v"
+test-cov = "pytest backend/tests/ -v --cov=backend --cov-report=term-missing"
+
+# 평가 파이프라인
+eval     = "python evaluation/run_eval.py"
+
+# 의존성 설치
+install  = "pip install -r requirements.txt"
