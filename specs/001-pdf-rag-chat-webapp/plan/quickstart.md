@@ -6,23 +6,33 @@
 
 ## 사전 요구사항
 
-- Python 3.11+
+- Python 3.11 ~ 3.13 권장 (3.14+는 ML 패키지 호환성 미보장)
 - 8GB+ RAM (BGE-M3 모델 로딩)
 - Claude API 키 또는 OpenAI API 키
+
+> **macOS (Homebrew) 사용자**: `python`, `pip` 대신 `python3`, `pip3` 또는 명시적 버전 경로를 사용한다.
+> Python 3.13 설치: `brew install python@3.13`
 
 ---
 
 ## 1. 환경 설정
 
 ```bash
-# 저장소 클론
+# 저장소 루트로 이동
 cd rag-practice
 
-# Python 가상 환경 생성
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Python 가상 환경 생성 (macOS Homebrew 기준)
+/opt/homebrew/opt/python@3.13/bin/python3 -m venv .venv
 
-# 의존성 설치
+# Linux / 일반 환경
+# python3 -m venv .venv
+
+# 가상환경 활성화
+source .venv/bin/activate       # macOS / Linux
+# .venv\Scripts\activate        # Windows
+
+# pip 업그레이드 후 의존성 설치
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
