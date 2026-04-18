@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend.models.database import get_db
 from backend.models.document import Document, DocumentStatus
+from backend.services.bm25_indexer import delete_bm25_index
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -159,6 +160,8 @@ def delete_document(doc_id: str, db: Session = Depends(get_db)):
 
     if doc.index_path and os.path.exists(doc.index_path):
         shutil.rmtree(doc.index_path, ignore_errors=True)
+
+    delete_bm25_index(doc.id)
 
     db.delete(doc)
     db.commit()
