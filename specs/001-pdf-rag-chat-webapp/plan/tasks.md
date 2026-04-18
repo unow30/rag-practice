@@ -152,10 +152,10 @@
 **의존성**: T-06  
 **산출물**: `backend/services/retriever.py`
 
-- [ ] 지정 문서(들)의 FAISS 인덱스 로드 및 병합
-- [ ] 질문 임베딩 후 top-5 검색
-- [ ] 검색 결과에 메타데이터(page, doc_id, content) 포함하여 반환
-- [ ] 문서 범위 필터링 (document_ids 지정 시 해당 문서만 검색)
+- [x] 지정 문서(들)의 FAISS 인덱스 로드 및 병합
+- [x] 질문 임베딩 후 top-k 검색 (RETRIEVAL_TOP_K 환경 변수, 기본 20)
+- [x] 검색 결과에 메타데이터(page, doc_id, content, document_name, score) 포함하여 반환
+- [x] 문서 범위 필터링 (document_ids 지정 시 해당 문서만 검색)
 
 ---
 
