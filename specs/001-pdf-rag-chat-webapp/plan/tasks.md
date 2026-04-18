@@ -67,16 +67,16 @@
 **의존성**: T-02  
 **산출물**: `backend/api/documents.py` — `POST /api/documents`
 
-- [ ] 파일 유효성 검사
+- [x] 파일 유효성 검사
   - PDF 형식 확인 (MIME type + 확장자)
   - 파일 크기 ≤ 50MB
   - 중복 파일 감지 (SHA-256 해시 비교)
   - 문서 수 한도 확인 (≤ 20개)
-- [ ] 파일 저장: `data/documents/{doc_id}_{filename}`
-- [ ] Document 레코드 생성 (status=PENDING)
-- [ ] 백그라운드 처리 작업 트리거
-- [ ] 응답: `{ documents: [{ id, name, size_bytes, status, uploaded_at }] }`
-- [ ] 오류 응답: INVALID_FILE_TYPE, FILE_TOO_LARGE, DUPLICATE_FILE, DOCUMENT_LIMIT_EXCEEDED
+- [x] 파일 저장: `data/documents/{doc_id}_{filename}`
+- [x] Document 레코드 생성 (status=PENDING)
+- [x] 백그라운드 처리 작업 트리거
+- [x] 응답: `{ documents: [{ id, name, size_bytes, status, uploaded_at }] }`
+- [x] 오류 응답: INVALID_FILE_TYPE, FILE_TOO_LARGE, DUPLICATE_FILE, DOCUMENT_LIMIT_EXCEEDED
 
 ---
 
