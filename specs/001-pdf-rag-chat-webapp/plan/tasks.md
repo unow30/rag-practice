@@ -297,10 +297,10 @@
 **의존성**: T-06  
 **산출물**: `backend/services/bm25_indexer.py`
 
-- [ ] `rank_bm25` 설치 및 `BM25Okapi` 초기화
-- [ ] 문서 인덱싱 시 BM25 역인덱스 생성
-- [ ] BM25 인덱스 저장: `data/indexes/{doc_id}/bm25.pkl`
-- [ ] 문서 삭제 시 BM25 인덱스도 함께 삭제
+- [x] `rank_bm25` 설치 및 `BM25Okapi` 초기화
+- [x] 문서 인덱싱 시 BM25 역인덱스 생성
+- [x] BM25 인덱스 저장: `data/indexes/{doc_id}/bm25.pkl`
+- [x] 문서 삭제 시 BM25 인덱스도 함께 삭제
 
 ---
 
@@ -309,9 +309,9 @@
 **의존성**: T-17  
 **산출물**: `backend/services/retriever.py` 수정
 
-- [ ] `EnsembleRetriever(retrievers=[faiss, bm25], weights=[0.5, 0.5])` 구성
-- [ ] RRF(k=60)로 결합, top-20 후보 반환
-- [ ] 환경 변수 `RETRIEVER=ensemble` 로 v0 단순 FAISS와 전환 가능하게 설계
+- [x] `EnsembleRetriever(retrievers=[faiss, bm25], weights=[0.5, 0.5])` 구성
+- [x] RRF(k=60)로 결합, top-20 후보 반환
+- [x] 환경 변수 `RETRIEVER=ensemble` 로 v0 단순 FAISS와 전환 가능하게 설계
 
 ---
 
@@ -335,10 +335,10 @@
 **의존성**: T-18  
 **산출물**: `backend/services/query_expander.py`
 
-- [ ] LLM으로 원 질문의 2~3개 paraphrase 생성
-- [ ] 각 변형 질문으로 검색 실행
-- [ ] 중복 청크 제거 후 RRF 결합
-- [ ] 환경 변수 `MULTI_QUERY=true/false`로 활성화 제어
+- [x] LLM으로 원 질문의 2~3개 paraphrase 생성
+- [x] 각 변형 질문으로 검색 실행
+- [x] 중복 청크 제거 후 RRF 결합
+- [x] 환경 변수 `MULTI_QUERY=true/false`로 활성화 제어
 
 ---
 
@@ -359,10 +359,10 @@
 **의존성**: T-18  
 **산출물**: `backend/services/reranker.py`
 
-- [ ] `BAAI/bge-reranker-v2-m3` 모델 로드 (FlagEmbedding)
-- [ ] `rerank(question, candidate_docs, top_n=5) -> list[Document]` 구현
-- [ ] 각 문서에 `metadata['rerank_score']` 부착
-- [ ] top_n 환경 변수 설정 (`RERANK_TOP_N=5`)
+- [x] `BAAI/bge-reranker-v2-m3` 모델 로드 (FlagEmbedding)
+- [x] `rerank(question, candidate_docs, top_n=5) -> list[Document]` 구현
+- [x] 각 문서에 `metadata['rerank_score']` 부착
+- [x] top_n 환경 변수 설정 (`RERANK_TOP_N=5`)
 
 ---
 
@@ -371,10 +371,10 @@
 **의존성**: T-22  
 **산출물**: `backend/services/pipeline.py`
 
-- [ ] `ask()` 함수 구현 (research.md §13 참조)
-- [ ] 각 단계 디버그 로깅 추가 (candidate 수, rerank 점수)
-- [ ] `POST /api/chat` 에서 `ask()` 함수 호출로 전환
-- [ ] Retriever top-k 20 → Reranker top-n 5로 파이프라인 연결
+- [x] `ask()` 함수 구현 (research.md §13 참조)
+- [x] 각 단계 디버그 로깅 추가 (candidate 수, rerank 점수)
+- [x] `POST /api/chat` 에서 `ask()` 함수 호출로 전환
+- [x] Retriever top-k 20 → Reranker top-n 5로 파이프라인 연결
 
 ---
 
@@ -393,15 +393,59 @@
 - [ ] 실패 카테고리 분석 (텍스트/표/그래프별)
 - [ ] 결과 `evaluation/results/final.json` 저장
 
+
+---
+
+## UI/UX 개선 (Polish Phase)
+
+### [T-25] 중복 문서 감지 및 신규 문서 선별
+
+**의존성**: T-03 (기존 업로드 API)  
+**산출물**: `backend/api/documents.py` 수정, `frontend/app.py` 수정
+
+**목표**: 사용자가 이미 업로드된 문서와 함께 새 문서를 일괄 업로드할 때, 중복 문서를 자동으로 필터링하고 신규 문서만 업로드하도록 개선
+
+- [x] 백엔드: `POST /api/documents` 응답에 `duplicates` 필드 추가
+  - 중복으로 감지된 문서 목록 반환 (id, name, hash)
+  - 신규 문서만 처리하여 `documents` 배열에 포함
+- [x] 프론트엔드: 업로드 결과 표시 개선
+  - 신규 업로드된 문서 (초록색): "✓ {name} 업로드됨"
+  - 중복 감지된 문서 (주황색): "⚠ {name} 이미 업로드됨 (중복 제외)"
+  - 결과를 사용자에게 명확하게 알림
+
+**테스트**:
+- 동일한 PDF를 2회 업로드 → 2번째 업로드 시 중복으로 표시
+- 신규 + 중복 문서 혼합 업로드 → 신규만 처리, 중복은 알림
+
+---
+
+### [T-26] 문서명 Tooltip 구현
+
+**의존성**: T-12 (기존 프론트엔드)  
+**산출물**: `frontend/app.py` 수정
+
+**목표**: 문서 목록에서 긴 문서명이 생략되어 "..."으로 표시될 때, 마우스를 올리면 전체 파일명을 tooltip으로 보여주기
+
+- [x] Streamlit UI 개선
+  - `st.column()` 내 문서명 표시 부분에 `title="{full_filename}"` 추가
+  - 또는 `st.tooltip()` 사용하여 마우스 호버 시 전체명 표시
+- [x] 문서목록 레이아웃: 문서명 너비 제한 (예: max-width 200px)
+  - CSS 또는 Streamlit 설정으로 명시적인 생략 유도
+- [ ] 테스트
+  - 긴 파일명 (50글자 이상): "Document_with_very_long_name_12345678...pdf"
+  - 마우스 호버: 전체명 표시 확인
+
 ---
 
 ## 전체 작업 의존성 요약
 
 ```
-T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13
-                ↘                                    ↗
-                 T-07 ─────────────────────────────
-                 
+T-01 → T-02 → T-03 ─┐ → T-04 → T-05 → T-06 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13
+                    ├→ T-07 ─────────────────────────┘
+                    └→ T-25 (중복 감지 개선)
+                    
+T-12 → T-26 (문서명 Tooltip)
+
 T-13 → T-14 → T-15 → T-16
                         ↓
               Recall@5<80%? → T-17 → T-18 → T-19
@@ -415,8 +459,10 @@ T-13 → T-14 → T-15 → T-16
 
 ## 작업 우선순위 (v0 병렬 가능 항목)
 
-T-01 완료 후 아래 두 흐름 병렬 진행 가능:
+T-01 완료 후 아래 세 흐름 병렬 진행 가능:
 - **흐름 A**: T-02 → T-03 → T-04 → T-05 → T-06 → T-08 → T-09 → T-10
 - **흐름 B**: T-02 → T-07
+- **흐름 C** (개선): T-03 → T-25, T-12 → T-26
 
-T-11은 흐름 A + 흐름 B 완료 후 진행.
+T-11은 흐름 A + 흐름 B 완료 후 진행.  
+T-25, T-26은 v0 완료 후 언제든지 병렬로 진행 가능 (Polish Phase).
