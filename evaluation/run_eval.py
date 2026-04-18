@@ -27,6 +27,7 @@ load_dotenv(ROOT / ".env")
 from sqlalchemy.orm import Session
 from backend.models.database import SessionLocal
 from backend.services.retriever import retrieve
+from backend.services.pipeline import prepare_context
 from backend.services.generator import generate_stream, format_docs, build_sources  # noqa: F401
 
 
@@ -34,6 +35,7 @@ from backend.services.generator import generate_stream, format_docs, build_sourc
 EVAL_SET_PATH = ROOT / "evaluation" / "eval_set.json"
 RESULTS_DIR = ROOT / "evaluation" / "results"
 RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", "5"))
+USE_PIPELINE = os.getenv("USE_PIPELINE", "false").lower() == "true"
 
 
 # ── 지표 계산 함수 ─────────────────────────────────────────────────────────────
@@ -87,15 +89,22 @@ async def evaluate_one(
     source_page = item.get("source_page")
     negative = item.get("negative_case", False)
 
-    # ── 검색 ──────────────────────────────────────────────────────────────────
+    # ── 검색 (pipeline 또는 retriever 직접 호출) ──────────────────────────────
     t0 = time.monotonic()
     try:
-        retrieved_docs = retrieve(
-            question=question,
-            db=db,
-            document_ids=document_ids or None,
-            top_k=RETRIEVAL_TOP_K,
-        )
+        if USE_PIPELINE:
+            retrieved_docs = prepare_context(
+                question=question,
+                db=db,
+                document_ids=document_ids or None,
+            )
+        else:
+            retrieved_docs = retrieve(
+                question=question,
+                db=db,
+                document_ids=document_ids or None,
+                top_k=RETRIEVAL_TOP_K,
+            )
     except Exception as e:
         return {
             "id": item["id"],
