@@ -105,33 +105,74 @@ streamlit run frontend/app.py --server.port 8501
 ## 6. 빠른 동작 확인 (cURL)
 
 ```bash
+# 헬스체크
+curl http://localhost:8000/health
+# → {"status": "ok"}
+
 # PDF 업로드
 curl -X POST http://localhost:8000/api/documents \
   -F "files=@sample.pdf"
 
-# 처리 상태 확인
-curl http://localhost:8000/api/documents/{id}/status
+# 문서 목록 조회 (doc_id 확인)
+curl http://localhost:8000/api/documents
 
-# 질문 (스트리밍)
+# 처리 상태 확인 (status: READY 가 될 때까지 반복)
+curl http://localhost:8000/api/documents/<doc_id>/status
+
+# 질문 (SSE 스트리밍)
 curl -N -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
-  -d '{"question": "문서의 주요 내용을 요약해 주세요.", "document_ids": []}'
+  -d '{"question": "문서의 주요 내용을 요약해 주세요.", "document_ids": ["<doc_id>"]}'
 ```
 
 ---
 
-## 7. 평가 실행
+## 7. 자동화 테스트 (pytest)
 
 ```bash
-# 평가 셋 기반 성능 측정
-python evaluation/run_eval.py --eval-set evaluation/eval_set.json --top-k 5
+# 업로드 API 통합 테스트 실행
+pytest backend/tests/test_upload_api.py -v
+```
+
+예상 결과:
+```
+test_health                PASSED
+test_upload_invalid_type   PASSED
+test_upload_too_large      PASSED
+test_list_documents_empty  PASSED
+```
+
+---
+
+## 8. RAG 품질 평가
+
+```bash
+# 전체 READY 문서 대상 평가
+python -m evaluation.run_eval --output-name v0_baseline
+
+# 특정 문서만 평가
+python -m evaluation.run_eval --doc-ids <doc_id> --output-name v0_baseline
+
+# 결과 파일 확인
+cat evaluation/results/v0_baseline.json
 ```
 
 출력 예시:
 ```
-Recall@5:       82.5%
-Answerable@5:   77.5%
-Exact Match:    63.0%
-Partial Match:  87.0%
-Avg Latency:    1,840ms
+📊 평가 결과 요약
+  Recall@5     : 72.50%
+  Answerable@5 : 68.00%
+  Exact Match  : 45.00%
+  Partial Match: 60.00%
+  Latency (첫 토큰): 1,842ms
+
+🎯 목표 달성 여부
+  ✅ Latency ≤ 3000ms
+  ❌ Recall@5 ≥ 80% → v1(BM25+RRF) 진행 필요
 ```
+
+결과에 따른 다음 단계:
+- **Recall@5 ≥ 80%** → v3 Reranker(T-22) 바로 진행
+- **Recall@5 < 80%** → v1 BM25+RRF(T-17) 진행
+
+> 측정 결과는 `evaluation/BASELINE.md` 에 기록하세요.
