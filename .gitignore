@@ -20,6 +20,9 @@ data/documents/
 data/indexes/
 data/rag.db
 
+# Docker
+docker-compose.override.yml
+
 # OS
 .DS_Store
 Thumbs.db

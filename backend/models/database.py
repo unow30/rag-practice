@@ -1,13 +1,18 @@
 import os
-from sqlalchemy import create_engine
+import sys
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-DB_PATH = os.getenv("DB_PATH", "./data/rag.db")
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://rag-practice:rag-practice@localhost:5434/rag-practice",
+)
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -27,5 +32,20 @@ def get_db():
 
 def init_db():
     from backend.models.document import Document, Chunk  # noqa: F401
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except OperationalError as e:
+        url = engine.url
+        print(
+            f"[ERROR] Cannot connect to PostgreSQL: {url.host}:{url.port}/{url.database}\n"
+            f"  Reason: {e.orig}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     Base.metadata.create_all(bind=engine)
+
+    url = engine.url
+    print(f"[DB] Connected to PostgreSQL: {url.host}:{url.port}/{url.database}")

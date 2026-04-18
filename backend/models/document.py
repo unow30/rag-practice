@@ -47,8 +47,8 @@ class Document(Base):
         default=DocumentStatus.PENDING,
     )
     error_message = Column(Text, nullable=True)
-    uploaded_at = Column(DateTime, nullable=False, default=_now)
-    processed_at = Column(DateTime, nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), nullable=False, default=_now)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
 
     chunks = relationship("Chunk", back_populates="document", cascade="all, delete-orphan")
 
@@ -84,7 +84,7 @@ class Chunk(Base):
     version = Column(String(64), nullable=True)
     token_count = Column(Integer, nullable=False, default=0)
     faiss_index_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=_now)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     document = relationship("Document", back_populates="chunks")
 

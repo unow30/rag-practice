@@ -1,22 +1,18 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change  : (new) → 1.0.0
-Modified        : N/A (initial creation)
-Added sections  : Identity, Principles (P-01~P-06), Governance
+Version change  : 1.2.0 → 1.2.1
+Modified        : 2026-04-18
+Added sections  : N/A
 Removed sections: N/A
-Templates updated:
-  ✅ .specify/memory/constitution.md (this file, created)
-  ⚠ .specify/templates/plan-template.md (not yet created)
-  ⚠ .specify/templates/spec-template.md (not yet created)
-  ⚠ .specify/templates/tasks-template.md (not yet created)
-Deferred items  : templates 미생성 (프로젝트에서 스크립트 없이 운영 중)
+Changed sections: 3절 기술 스택 제약 — Python 런타임 ≥3.13, 패키지 관리 uv 항목 추가 (pyproject.toml 반영)
+Templates updated: N/A
 -->
 
 # 프로젝트 헌법 (Project Constitution)
 
 **Project**: PDF RAG 대화형 웹 앱 (`rag-practice`)
-**Constitution Version**: 1.1.0
+**Constitution Version**: 1.2.1
 **Ratification Date**: 2026-04-18
 **Last Amended Date**: 2026-04-18
 
@@ -147,9 +143,11 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 
 | 계층 | 선택 | 버전 조건 |
 |------|------|-----------|
+| Python 런타임 | CPython | ≥ 3.13 |
+| 패키지 관리 | uv | — |
 | 백엔드 프레임워크 | FastAPI | ≥ 0.100 |
 | 프론트엔드 | Streamlit | ≥ 1.30 |
-| 데이터베이스 | SQLite (SQLAlchemy) | — |
+| 데이터베이스 | PostgreSQL (SQLAlchemy) — 로컬: `localhost:5434/rag-practice` | ≥ 15 |
 | 임베딩 모델 | BGE-M3 (`BAAI/bge-m3`) | 고정 |
 | 벡터 저장소 | FAISS IndexFlatIP | — |
 | LLM | Claude API (`claude-sonnet-4-6`) | 환경변수로 교체 가능 |
@@ -198,3 +196,5 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 |------|------|-----------|
 | 1.0.0 | 2026-04-18 | 초기 제정 |
 | 1.1.0 | 2026-04-18 | P-07 Task 완성 상태 표시 규칙 추가 |
+| 1.2.0 | 2026-04-18 | 3절 데이터베이스 제약 SQLite → PostgreSQL 변경 (specs/002-postgres-local-db) |
+| 1.2.1 | 2026-04-18 | 3절 Python 런타임 ≥3.13, 패키지 관리 uv 항목 추가 (pyproject.toml 반영) |

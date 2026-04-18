@@ -39,4 +39,6 @@ def on_startup():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    from backend.models.database import engine
+    url = engine.url
+    return {"status": "ok", "db": f"postgresql://{url.host}:{url.port}/{url.database}"}
