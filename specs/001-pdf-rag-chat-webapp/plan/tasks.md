@@ -52,13 +52,13 @@
 **의존성**: T-01  
 **산출물**: `backend/models/database.py`, `backend/models/document.py`
 
-- [ ] SQLite 연결 설정 (SQLAlchemy)
-- [ ] `Document` 테이블 정의
+- [x] SQLite 연결 설정 (SQLAlchemy)
+- [x] `Document` 테이블 정의
   - id (UUID PK), name, file_path, file_hash, size_bytes, page_count, chunk_count, index_path, status, error_message, uploaded_at, processed_at
-- [ ] `Chunk` 테이블 정의
+- [x] `Chunk` 테이블 정의
   - id (UUID PK), document_id (FK), chunk_index, content, content_type, page_number, page_end, section_title, version, token_count, faiss_index_id, created_at
-- [ ] `Document.status` ENUM 정의 (PENDING / EXTRACTING / CHUNKING / EMBEDDING / READY / FAILED)
-- [ ] DB 마이그레이션 스크립트 또는 `create_all()` 초기화
+- [x] `Document.status` ENUM 정의 (PENDING / EXTRACTING / CHUNKING / EMBEDDING / READY / FAILED)
+- [x] DB 마이그레이션 스크립트 또는 `create_all()` 초기화
 
 ---
 
