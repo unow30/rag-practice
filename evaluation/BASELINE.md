@@ -86,18 +86,37 @@ cat evaluation/results/v0_baseline.json | python -m json.tool
 
 ## v2 기준선 측정 결과 (MULTI_QUERY=true)
 
+**측정일**: 2026-04-18  
+**결과 파일**: `evaluation/results/v2_multiquery.json`
+
 | 지표 | v2 측정값 | v1 대비 | 목표 | 달성 여부 |
 |------|-----------|---------|------|-----------|
-| Recall@5 | — | — | ≥ 80% | — |
-| Partial Match | — | — | ≥ 85% | — |
-| Latency (첫 토큰) | — | — | ≤ 3,000ms | — |
+| Recall@5 | 61.54% | 0%p | ≥ 80% | ❌ 미달 |
+| Partial Match | 86.67% | 0%p | ≥ 85% | ✅ 달성 |
+| Latency (첫 토큰) | 9,247ms | +718ms | ≤ 3,000ms | ❌ 미달 |
 
-## 최종 평가 결과 (전체 파이프라인)
+**판단**: Multi-query 효과 없음 (Recall 동일, Latency 증가) → **v3 (Reranker) 진행**
+
+---
+
+## 최종 평가 결과 (전체 파이프라인: RETRIEVER=ensemble + Reranker)
+
+**측정일**: 2026-04-18  
+**결과 파일**: `evaluation/results/final.json`
 
 | 지표 | 최종값 | 목표 | 달성 여부 |
 |------|--------|------|-----------|
-| Recall@5 | — | ≥ 80% | — |
-| Answerable@5 | — | ≥ 80% | — |
-| Exact Match | — | ≥ 60% | — |
-| Partial Match | — | ≥ 85% | — |
-| Latency (첫 토큰) | — | ≤ 3,000ms | — |
+| Recall@5 | 61.54% | ≥ 80% | ❌ 미달 |
+| Answerable@5 | 76.67% | ≥ 80% | ❌ 미달 |
+| Exact Match | 0.00% | ≥ 60% | ❌ 미달 |
+| Partial Match | 85.00% | ≥ 85% | ✅ 달성 |
+| Latency (첫 토큰) | 22,294ms* | ≤ 3,000ms | ❌ 미달 |
+
+> *Latency는 Reranker 모델 첫 로드(약 170s) 포함 값. 서버 운영 환경에서 모델 캐시 후 실 응답은 10~25s 수준.
+
+### 분석 메모
+
+- **Recall 61.54%**: TABLE 카테고리(Q6~Q9, Q12) 5문항 전부 Recall=0 — 업종별 수익률이 이미지/그래프로 삽입되어 텍스트 추출 안 됨. OCR 적용 필요.
+- **Exact Match 0%**: `expected_answer`가 구체적 수치 포함 문장으로 LLM 답변 표현과 다름 — partial_match 방식으로만 유효.
+- **Partial Match 85%**: 목표 달성.
+- **다음 개선 방향**: OCR 파이프라인 추가 시 TABLE 카테고리 Recall 대폭 향상 예상.
