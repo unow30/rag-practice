@@ -76,11 +76,13 @@ cat evaluation/results/v0_baseline.json | python -m json.tool
 
 | 지표 | v1 측정값 | v0 대비 | 목표 | 달성 여부 |
 |------|-----------|---------|------|-----------|
-| Recall@5 | — | — | ≥ 80% | — |
-| Answerable@5 | — | — | ≥ 80% | — |
-| Exact Match | — | — | ≥ 60% | — |
-| Partial Match | — | — | ≥ 85% | — |
-| Latency (첫 토큰) | — | — | ≤ 3,000ms | — |
+| Recall@5 | 61.54% | +61.54%p | ≥ 80% | ❌ 미달 |
+| Answerable@5 | 78.89% | +78.89%p | ≥ 80% | ❌ 미달 |
+| Exact Match | 0.00% | 0%p | ≥ 60% | ❌ 미달 |
+| Partial Match | 86.67% | +61.11%p | ≥ 85% | ✅ 달성 |
+| Latency (첫 토큰) | 8,529ms | +5,498ms | ≤ 3,000ms | ❌ 미달 |
+
+**판단**: Recall@5 = 61.54% < 80%, 표현 불일치 질문 Recall 개선 필요 → **v2 (Multi-query) 진행**
 
 ## v2 기준선 측정 결과 (MULTI_QUERY=true)
 
