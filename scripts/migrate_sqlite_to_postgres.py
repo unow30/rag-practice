@@ -17,6 +17,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# 프로젝트 루트를 sys.path에 추가 (scripts/ 하위에서 실행 시 backend 모듈 인식)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dotenv import load_dotenv
 
 load_dotenv()
