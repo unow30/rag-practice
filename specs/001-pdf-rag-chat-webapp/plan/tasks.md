@@ -177,16 +177,16 @@
 **의존성**: T-08, T-09  
 **산출물**: `backend/api/chat.py` — `POST /api/chat`, `DELETE /api/chat/{id}`
 
-- [ ] 세션 인메모리 대화 저장소 구현 (Conversation, Message)
-- [ ] `POST /api/chat` — SSE 스트리밍 응답
+- [x] 세션 인메모리 대화 저장소 구현 (Conversation, Message)
+- [x] `POST /api/chat` — SSE 스트리밍 응답
   - conversation_id 신규 생성 또는 기존 세션 이어서
   - document_ids로 검색 범위 설정
   - retriever → generator 순서로 호출
   - `event: token` 스트림 전송
   - `event: done` — sources, latency_ms 포함
   - `event: error` — AI 서비스 타임아웃(30초) 처리
-- [ ] `DELETE /api/chat/{id}` — 대화 기록 초기화
-- [ ] READY 상태 문서 없을 시 NO_READY_DOCUMENTS 오류
+- [x] `DELETE /api/chat/{id}` — 대화 기록 초기화
+- [x] READY 상태 문서 없을 시 NO_READY_DOCUMENTS 오류
 
 ---
 
