@@ -164,11 +164,11 @@
 **의존성**: T-08  
 **산출물**: `backend/services/generator.py`
 
-- [ ] 시스템 프롬프트 정의 ("근거 없는 추측 금지" 원칙)
-- [ ] `format_docs()` 함수 구현 (청크 목록 → 컨텍스트 문자열)
-- [ ] Claude API 스트리밍 연결 (anthropic SDK, `stream=True`)
-- [ ] 문서에서 답변 불가 시 "문서에서 관련 정보를 찾을 수 없습니다" 반환
-- [ ] Source 객체 구성: document_name, page_number, content_snippet, relevance_score
+- [x] 시스템 프롬프트 정의 ("근거 없는 추측 금지" 원칙)
+- [x] `format_docs()` 함수 구현 (청크 목록 → 컨텍스트 문자열)
+- [x] Claude API 스트리밍 연결 (anthropic SDK, `stream=True`)
+- [x] 문서에서 답변 불가 시 "문서에서 관련 정보를 찾을 수 없습니다" 반환
+- [x] Source 객체 구성: document_name, page_number, content_snippet, relevance_score
 
 ---
 
