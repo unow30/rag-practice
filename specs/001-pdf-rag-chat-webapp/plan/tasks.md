@@ -27,7 +27,7 @@
 **의존성**: 없음  
 **산출물**: 디렉토리 구조, `requirements.txt`, `.env.example`
 
-- [ ] 디렉토리 구조 생성
+- [x] 디렉토리 구조 생성
   ```
   rag-practice/
   ├── backend/
@@ -41,9 +41,9 @@
   │   └── indexes/
   └── evaluation/
   ```
-- [ ] `requirements.txt` 작성 (fastapi, uvicorn, pymupdf, langchain, faiss-cpu, sentence-transformers, FlagEmbedding, sqlalchemy, python-multipart, anthropic, streamlit)
-- [ ] `.env.example` 작성 (ANTHROPIC_API_KEY, EMBEDDING_MODEL, CHUNK_SIZE, CHUNK_OVERLAP, DATA_DIR, DB_PATH)
-- [ ] `data/documents/`, `data/indexes/` 디렉토리 생성
+- [x] `requirements.txt` 작성 (fastapi, uvicorn, pymupdf, langchain, faiss-cpu, sentence-transformers, FlagEmbedding, sqlalchemy, python-multipart, anthropic, streamlit)
+- [x] `.env.example` 작성 (ANTHROPIC_API_KEY, EMBEDDING_MODEL, CHUNK_SIZE, CHUNK_OVERLAP, DATA_DIR, DB_PATH)
+- [x] `data/documents/`, `data/indexes/` 디렉토리 생성
 
 ---
 
