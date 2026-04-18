@@ -122,13 +122,13 @@
 **의존성**: T-05  
 **산출물**: `backend/services/embedder.py`, `backend/services/indexer.py`
 
-- [ ] BGE-M3 모델 로드 (`BAAI/bge-m3`, FlagEmbedding)
-- [ ] 청크 배치 임베딩 (배치 크기 32)
-- [ ] FAISS `IndexFlatIP` 생성 및 벡터 추가
-- [ ] 인덱스 저장: `data/indexes/{doc_id}/index.faiss`, `index.pkl` (chunk_id 매핑)
-- [ ] Document.index_path, Chunk.faiss_index_id 업데이트
-- [ ] Document.status → EMBEDDING → READY 업데이트
-- [ ] 처리 실패 시 status → FAILED, error_message 저장
+- [x] BGE-M3 모델 로드 (`BAAI/bge-m3`, FlagEmbedding)
+- [x] 청크 배치 임베딩 (배치 크기 32)
+- [x] FAISS `IndexFlatIP` 생성 및 벡터 추가
+- [x] 인덱스 저장: `data/indexes/{doc_id}/index.faiss`, `index.pkl` (chunk_id 매핑)
+- [x] Document.index_path, Chunk.faiss_index_id 업데이트
+- [x] Document.status → EMBEDDING → READY 업데이트
+- [x] 처리 실패 시 status → FAILED, error_message 저장
 
 ---
 
@@ -137,9 +137,9 @@
 **의존성**: T-02  
 **산출물**: `backend/api/documents.py` — GET, DELETE 엔드포인트
 
-- [ ] `GET /api/documents`: 문서 목록 반환 (id, name, size_bytes, page_count, chunk_count, status, uploaded_at, processed_at)
-- [ ] `GET /api/documents/{id}/status`: 처리 상태 + 진행 메시지 반환
-- [ ] `DELETE /api/documents/{id}`:
+- [x] `GET /api/documents`: 문서 목록 반환 (id, name, size_bytes, page_count, chunk_count, status, uploaded_at, processed_at)
+- [x] `GET /api/documents/{id}/status`: 처리 상태 + 진행 메시지 반환
+- [x] `DELETE /api/documents/{id}`:
   - PDF 파일 삭제 (`data/documents/`)
   - FAISS 인덱스 디렉토리 삭제 (`data/indexes/{doc_id}/`)
   - SQLite Chunk + Document 레코드 삭제
