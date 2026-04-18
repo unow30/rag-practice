@@ -79,8 +79,14 @@ with st.sidebar:
         with st.spinner("업로드 중..."):
             code, result = upload_files(uploaded)
         if code == 202:
-            st.success(f"{len(result['documents'])}개 파일 업로드 완료. 처리 중입니다...")
-            st.rerun()
+            new_docs = result.get("documents", [])
+            duplicates = result.get("duplicates", [])
+            if new_docs:
+                st.success(f"✓ {len(new_docs)}개 파일 업로드 완료. 처리 중입니다...")
+            for dup in duplicates:
+                st.warning(f"⚠ {dup['name']} — 이미 업로드된 문서입니다 (중복 제외)")
+            if new_docs or duplicates:
+                st.rerun()
         else:
             detail = result.get("detail", result)
             msg = detail.get("message", str(detail)) if isinstance(detail, dict) else str(detail)
