@@ -113,7 +113,7 @@ async def upload_documents(
         db.commit()
         db.refresh(doc)
 
-        background_tasks.add_task(_process_document_placeholder, doc_id)
+        background_tasks.add_task(_process_document_background, doc_id)
         created_docs.append(doc.to_dict())
 
     return {"documents": created_docs}
@@ -176,6 +176,12 @@ def _status_message(status: DocumentStatus) -> str:
     return messages.get(status, "알 수 없는 상태")
 
 
-async def _process_document_placeholder(doc_id: str):
-    """추출·청킹·임베딩 서비스 구현 전 임시 플레이스홀더 (T-04~T-06에서 교체)"""
-    pass
+def _process_document_background(doc_id: str):
+    """추출 → 청킹 → 임베딩 → FAISS 인덱싱 전체 파이프라인 (백그라운드 실행)"""
+    from backend.models.database import SessionLocal
+    from backend.services.indexer import process_document
+    db = SessionLocal()
+    try:
+        process_document(doc_id, db)
+    finally:
+        db.close()
