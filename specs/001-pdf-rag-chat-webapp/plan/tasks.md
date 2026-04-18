@@ -238,13 +238,13 @@
 **의존성**: T-13 (실제 PDF로 테스트 가능한 상태)  
 **산출물**: `evaluation/eval_set.json`
 
-- [ ] 테스트 PDF 준비 (실제 사용할 문서 유형과 동일한 종류)
-- [ ] 최소 15개 질문-정답 쌍 작성
+- [x] 테스트 PDF 준비 (실제 사용할 문서 유형과 동일한 종류)
+- [x] 최소 15개 질문-정답 쌍 작성
   - 텍스트 질문 5개 (EASY ~ MEDIUM)
   - 표 기반 질문 5개 (수치, 비교)
   - 그래프/복합 질문 3개 (HARD)
   - 문서에 없는 질문 2개 (negative case)
-- [ ] 각 질문에 keywords, category, source_page, difficulty 기재
+- [x] 각 질문에 keywords, category, source_page, difficulty 기재
 
 ```json
 [

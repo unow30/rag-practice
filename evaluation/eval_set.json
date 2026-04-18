@@ -1,0 +1,139 @@
+[
+  {
+    "id": 1,
+    "question": "이 문서의 주요 목적은 무엇인가요?",
+    "expected_answer": "문서의 핵심 목적을 서술한 답변",
+    "keywords": ["목적", "개요", "소개"],
+    "category": "TEXT",
+    "source_page": 1,
+    "difficulty": "EASY"
+  },
+  {
+    "id": 2,
+    "question": "문서에서 언급된 주요 개념이나 용어를 설명해 주세요.",
+    "expected_answer": "핵심 개념 및 용어 정의",
+    "keywords": ["개념", "용어", "정의"],
+    "category": "TEXT",
+    "source_page": 1,
+    "difficulty": "EASY"
+  },
+  {
+    "id": 3,
+    "question": "문서의 결론 또는 요약 내용은 무엇인가요?",
+    "expected_answer": "결론 또는 요약 내용",
+    "keywords": ["결론", "요약", "마무리"],
+    "category": "TEXT",
+    "source_page": -1,
+    "difficulty": "EASY"
+  },
+  {
+    "id": 4,
+    "question": "문서에서 제시된 주요 권고사항 또는 제언은 무엇인가요?",
+    "expected_answer": "권고사항 또는 제언 내용",
+    "keywords": ["권고", "제언", "제안"],
+    "category": "TEXT",
+    "source_page": -1,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "id": 5,
+    "question": "문서에서 다루는 문제점과 그 원인은 무엇인가요?",
+    "expected_answer": "문제점과 원인 분석 내용",
+    "keywords": ["문제", "원인", "이슈"],
+    "category": "TEXT",
+    "source_page": -1,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "id": 6,
+    "question": "문서에 포함된 표에서 가장 높은 수치를 가진 항목은 무엇인가요?",
+    "expected_answer": "표의 최고 수치 항목",
+    "keywords": ["최대", "최고", "수치"],
+    "category": "TABLE",
+    "source_page": -1,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "id": 7,
+    "question": "표에 나타난 두 항목 간의 차이는 얼마인가요?",
+    "expected_answer": "두 항목 간의 수치 차이",
+    "keywords": ["차이", "비교", "대비"],
+    "category": "TABLE",
+    "source_page": -1,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "id": 8,
+    "question": "표에서 특정 조건을 만족하는 항목들을 모두 나열해 주세요.",
+    "expected_answer": "조건 만족 항목 목록",
+    "keywords": ["조건", "필터", "해당"],
+    "category": "TABLE",
+    "source_page": -1,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "id": 9,
+    "question": "표에 나타난 데이터의 평균값은 얼마인가요?",
+    "expected_answer": "데이터 평균값",
+    "keywords": ["평균", "합계", "계산"],
+    "category": "TABLE",
+    "source_page": -1,
+    "difficulty": "HARD"
+  },
+  {
+    "id": 10,
+    "question": "표를 기반으로 어떤 항목이 가장 효율적인가요?",
+    "expected_answer": "효율성 비교 결과",
+    "keywords": ["효율", "성능", "비교"],
+    "category": "TABLE",
+    "source_page": -1,
+    "difficulty": "HARD"
+  },
+  {
+    "id": 11,
+    "question": "그래프 또는 도식에서 나타나는 전체적인 추세는 어떻게 되나요?",
+    "expected_answer": "추세 및 패턴 설명",
+    "keywords": ["추세", "트렌드", "변화"],
+    "category": "FIGURE",
+    "source_page": -1,
+    "difficulty": "HARD"
+  },
+  {
+    "id": 12,
+    "question": "여러 출처의 정보를 종합할 때 공통적으로 강조되는 점은 무엇인가요?",
+    "expected_answer": "공통 강조 내용",
+    "keywords": ["공통", "종합", "통합"],
+    "category": "MIXED",
+    "source_page": -1,
+    "difficulty": "HARD"
+  },
+  {
+    "id": 13,
+    "question": "문서의 텍스트와 표를 함께 고려했을 때 전체 흐름을 설명해 주세요.",
+    "expected_answer": "텍스트와 표를 통합한 분석",
+    "keywords": ["흐름", "구조", "통합"],
+    "category": "MIXED",
+    "source_page": -1,
+    "difficulty": "HARD"
+  },
+  {
+    "id": 14,
+    "question": "이 문서에는 우주 탐사 계획에 대한 내용이 포함되어 있나요?",
+    "expected_answer": "문서에서 관련 정보를 찾을 수 없습니다",
+    "keywords": ["우주", "탐사", "계획"],
+    "category": "TEXT",
+    "source_page": null,
+    "difficulty": "EASY",
+    "negative_case": true
+  },
+  {
+    "id": 15,
+    "question": "문서에서 양자 컴퓨팅 알고리즘에 대해 어떻게 설명하고 있나요?",
+    "expected_answer": "문서에서 관련 정보를 찾을 수 없습니다",
+    "keywords": ["양자", "컴퓨팅", "알고리즘"],
+    "category": "TEXT",
+    "source_page": null,
+    "difficulty": "EASY",
+    "negative_case": true
+  }
+]
