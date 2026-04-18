@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 
 from backend.models.database import get_db
 from backend.models.document import DocumentStatus, Document as DocModel
-from backend.services.generator import build_sources, format_docs, generate_stream
-from backend.services.retriever import retrieve
+from backend.services.generator import build_sources, generate_stream
+from backend.services.pipeline import prepare_context
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -66,8 +66,8 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         conv_id = conversation["id"]
         _conversations[conv_id] = conversation
 
-    # 검색
-    candidate_docs = retrieve(
+    # Retrieve → Rerank (동기, I/O 없음)
+    final_docs = prepare_context(
         question=request.question,
         db=db,
         document_ids=request.document_ids,
@@ -78,15 +78,14 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         full_answer = []
 
         try:
-            async for token in generate_stream(request.question, candidate_docs):
+            async for token in generate_stream(request.question, final_docs):
                 full_answer.append(token)
                 yield f"event: token\ndata: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
 
             latency_ms = int(time.time() * 1000) - start_ms
-            sources = build_sources(candidate_docs)
+            sources = build_sources(final_docs)
             msg_id = str(uuid.uuid4())
 
-            # 대화 기록 저장
             conversation["messages"].append({
                 "id": msg_id,
                 "role": "user",
