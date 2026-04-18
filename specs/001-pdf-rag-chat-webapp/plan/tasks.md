@@ -267,13 +267,13 @@
 **의존성**: T-14  
 **산출물**: `evaluation/run_eval.py`
 
-- [ ] 평가 셋 로드, 각 질문을 파이프라인에 전송
-- [ ] Recall@5 계산: 정답 청크가 candidate_docs top-5 안에 있는가
-- [ ] Answerable@5 계산: final_docs 컨텍스트만으로 정답 포함 가능한가
-- [ ] Exact Match: 답변에 expected_answer 완전 포함
-- [ ] Partial Match: keywords 중 몇 개 포함
-- [ ] Latency: 질문 제출 ~ 첫 토큰 시간(ms)
-- [ ] 결과 콘솔 출력 + `evaluation/results/YYYYMMDD_HHMMSS.json` 저장
+- [x] 평가 셋 로드, 각 질문을 파이프라인에 전송
+- [x] Recall@5 계산: 정답 청크가 candidate_docs top-5 안에 있는가
+- [x] Answerable@5 계산: final_docs 컨텍스트만으로 정답 포함 가능한가
+- [x] Exact Match: 답변에 expected_answer 완전 포함
+- [x] Partial Match: keywords 중 몇 개 포함
+- [x] Latency: 질문 제출 ~ 첫 토큰 시간(ms)
+- [x] 결과 콘솔 출력 + `evaluation/results/YYYYMMDD_HHMMSS.json` 저장
 
 ---
 
