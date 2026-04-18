@@ -109,11 +109,11 @@
 **의존성**: T-04  
 **산출물**: `backend/services/chunker.py`
 
-- [ ] `RecursiveCharacterTextSplitter` 설정 (chunk_size=800, chunk_overlap=120)
-- [ ] 청크별 Chunk 레코드 생성 (content, page_number, chunk_index, content_type=TEXT)
-- [ ] 표 청크 감지: Markdown table 패턴(`|---`) 포함 시 content_type=TABLE
-- [ ] Document.page_count, chunk_count 업데이트
-- [ ] Document.status → CHUNKING 업데이트
+- [x] `RecursiveCharacterTextSplitter` 설정 (chunk_size=800, chunk_overlap=120)
+- [x] 청크별 Chunk 레코드 생성 (content, page_number, chunk_index, content_type=TEXT)
+- [x] 표 청크 감지: Markdown table 패턴(`|---`) 포함 시 content_type=TABLE
+- [x] Document.page_count, chunk_count 업데이트
+- [x] Document.status → CHUNKING 업데이트
 
 ---
 
