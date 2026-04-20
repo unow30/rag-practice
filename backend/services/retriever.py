@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 from typing import List, Optional
@@ -161,15 +162,17 @@ def _ensemble_retrieve(
     bm25_all.sort(key=lambda x: x[0], reverse=True)
 
     merged = _rrf_merge(faiss_all, bm25_all, top_k)
-    return _build_langchain_docs(merged, db)
+    # _rrf_merge returns (chunk_id, score); convert to (score, chunk_id) for _build_langchain_docs
+    merged_normalized = [(score, chunk_id) for chunk_id, score in merged]
+    return _build_langchain_docs(merged_normalized, db)
 
 
 def _build_langchain_docs(
     results: List[tuple],
     db: Session,
 ) -> List[Document]:
-    chunk_ids = [r[0] for r in results]
-    score_map = {r[0]: r[1] for r in results}
+    chunk_ids = [r[1] for r in results]
+    score_map = {r[1]: r[0] for r in results}
 
     chunks = db.query(Chunk).filter(Chunk.id.in_(chunk_ids)).all()
     chunk_map = {c.id: c for c in chunks}
@@ -184,6 +187,13 @@ def _build_langchain_docs(
         metadata = chunk.to_metadata()
         metadata["document_name"] = doc_record.name if doc_record else ""
         metadata["score"] = score_map.get(chunk_id, 0.0)
+        try:
+            annotations = json.loads(chunk.annotation_types) if chunk.annotation_types else {}
+        except (json.JSONDecodeError, TypeError):
+            annotations = {}
+        metadata["annotations"] = annotations
+        metadata["annotation_types"] = list(annotations.keys())
+        metadata["memo_content"] = chunk.memo_content
 
         langchain_docs.append(Document(page_content=chunk.content, metadata=metadata))
 
