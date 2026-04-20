@@ -13,6 +13,8 @@ def get_model():
     if _model is None:
         with _model_lock:
             if _model is None:
+                import transformers
+                transformers.logging.set_verbosity_error()
                 from FlagEmbedding import BGEM3FlagModel
                 _model = BGEM3FlagModel(EMBEDDING_MODEL, use_fp16=True)
     return _model
