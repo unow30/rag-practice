@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.chat import router as chat_router
 from backend.api.documents import router as documents_router
 from backend.models.database import init_db
+from backend.services.file_watcher import start_file_watcher, stop_file_watcher
 
 app = FastAPI(
     title="PDF RAG 대화형 웹 앱",
@@ -36,6 +37,12 @@ def on_startup():
     os.makedirs(os.path.join(data_dir, "indexes"), exist_ok=True)
     init_db()
     _recover_stuck_documents()
+    start_file_watcher(os.path.join(data_dir, "documents"))
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    stop_file_watcher()
 
 
 def _recover_stuck_documents():
