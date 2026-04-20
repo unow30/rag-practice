@@ -1,4 +1,3 @@
-import json
 import os
 import pickle
 import shutil
@@ -9,8 +8,8 @@ import numpy as np
 from langchain.schema import Document
 from sqlalchemy.orm import Session
 
-from backend.models.document import Chunk, ContentType, Document as DocModel, DocumentStatus
-from backend.services.bm25_indexer import build_bm25_index
+from backend.models.document import Chunk, ContentType, Document as DocModel, DocumentAnnotationType, DocumentStatus
+from backend.services.bm25_indexer import build_bm25_index, delete_bm25_index
 from backend.services.chunker import split_documents
 from backend.services.embedder import embed_texts
 from backend.services.extractor import get_extractor
@@ -74,10 +73,12 @@ def process_document(doc_id: str, db: Session) -> None:
         # chunk_id 매핑 저장
         chunk_records = []
         id_map = []
+        merged_annotations: dict = {}
         for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
             meta = chunk.metadata
-            raw_annot = meta.get("annotations")
-            annotation_types_json = json.dumps(raw_annot, ensure_ascii=False) if raw_annot else None
+            raw_annot = meta.get("annotations") or None
+            if raw_annot:
+                merged_annotations.update(raw_annot)
             cr = Chunk(
                 document_id=doc_id,
                 chunk_index=meta.get("chunk_index", i),
@@ -88,13 +89,24 @@ def process_document(doc_id: str, db: Session) -> None:
                 version=meta.get("version"),
                 token_count=len(chunk.page_content.split()),
                 faiss_index_id=i,
-                annotation_types=annotation_types_json,
                 memo_content=meta.get("memo_content"),
             )
             db.add(cr)
             db.flush()
             id_map.append(cr.id)
             chunk_records.append(cr)
+
+        # 문서 단위 annotation_types upsert
+        existing_annot = db.query(DocumentAnnotationType).filter(
+            DocumentAnnotationType.document_id == doc_id
+        ).first()
+        if existing_annot:
+            existing_annot.annotation_types = merged_annotations or None
+        else:
+            db.add(DocumentAnnotationType(
+                document_id=doc_id,
+                annotation_types=merged_annotations or None,
+            ))
 
         with open(os.path.join(index_dir, "index.pkl"), "wb") as f:
             pickle.dump(id_map, f)
@@ -105,6 +117,7 @@ def process_document(doc_id: str, db: Session) -> None:
         doc_record.index_path = index_dir
         doc_record.status = DocumentStatus.READY
         doc_record.processed_at = datetime.now(timezone.utc)
+        doc_record.file_changed = False
         db.commit()
 
     except Exception as e:

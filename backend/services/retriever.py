@@ -1,4 +1,3 @@
-import json
 import os
 import pickle
 from typing import List, Optional
@@ -187,13 +186,6 @@ def _build_langchain_docs(
         metadata = chunk.to_metadata()
         metadata["document_name"] = doc_record.name if doc_record else ""
         metadata["score"] = score_map.get(chunk_id, 0.0)
-        try:
-            annotations = json.loads(chunk.annotation_types) if chunk.annotation_types else {}
-        except (json.JSONDecodeError, TypeError):
-            annotations = {}
-        metadata["annotations"] = annotations
-        metadata["annotation_types"] = list(annotations.keys())
-        metadata["memo_content"] = chunk.memo_content
 
         langchain_docs.append(Document(page_content=chunk.content, metadata=metadata))
 
