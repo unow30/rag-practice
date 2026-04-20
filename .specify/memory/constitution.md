@@ -1,20 +1,25 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change  : 1.2.0 → 1.2.1
-Modified        : 2026-04-18
-Added sections  : N/A
+Version change  : 1.2.1 → 1.3.0
+Modified        : 2026-04-20
+Added sections  :
+  - P-08 데이터 정규화 (Data Normalization) — specs/004-annotation-types-table 회고 반영
+  - P-09 외부 파일 변경 처리 (External Mutation Handling) — specs/003-pdf-edit-reindex + feat/file-watcher-auto-detect 회고 반영
+Changed sections:
+  - P-06 브랜치 네이밍 — spec이 없는 일반 작업 브랜치 프리픽스(`feat/`, `fix/`, `refactor/`) 규칙 보완
+  - 5절 거버넌스 — 규정 준수 검토 체크리스트에 P-08·P-09 항목 추가, 버전 이력 추가
 Removed sections: N/A
-Changed sections: 3절 기술 스택 제약 — Python 런타임 ≥3.13, 패키지 관리 uv 항목 추가 (pyproject.toml 반영)
-Templates updated: N/A
+Templates updated: N/A (`.specify/templates/` 디렉토리 미존재)
+Follow-up TODOs : 없음
 -->
 
 # 프로젝트 헌법 (Project Constitution)
 
 **Project**: PDF RAG 대화형 웹 앱 (`rag-practice`)
-**Constitution Version**: 1.2.1
+**Constitution Version**: 1.3.0
 **Ratification Date**: 2026-04-18
-**Last Amended Date**: 2026-04-18
+**Last Amended Date**: 2026-04-20
 
 ---
 
@@ -104,7 +109,9 @@ Templates updated: N/A
 
 ### P-06: 브랜치 네이밍 규칙 (Branch Naming)
 
-task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
+모든 작업 브랜치는 목적에 따라 아래 두 형식 중 하나를 따른다.
+
+#### (A) Spec 기반 task 브랜치
 
 ```
 {speckit-specify 폴더명}/{task-id}-{task-slug}
@@ -113,11 +120,26 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 - **speckit-specify 폴더명**: `.specify/feature.json`의 `feature_directory`에서 `specs/` 제거
 - **task-id**: tasks.md에 정의된 태스크 ID (예: `T-14`, `T-22`)
 - **task-slug**: 태스크 내용을 2~4단어 kebab-case로 요약
-- **구분자**: 슬래시(`/`) — Git 네임스페이스 브랜치로 동작
 
-**예시**: `001-pdf-rag-chat-webapp/T-17-bm25-indexer`
+**예시**: `001-pdf-rag-chat-webapp/T-17-bm25-indexer`, `004-annotation-types-table/T-01-normalize-annotation`
 
-**적용 범위**: 모든 feature 브랜치 생성 시 (`/speckit-implement` 포함)
+#### (B) Spec이 없는 일반 작업 브랜치
+
+Spec 없이 진행하는 소규모 기능·버그 수정·리팩터링은 아래 프리픽스를 사용한다.
+
+| 프리픽스 | 용도 | 예시 |
+|----------|------|------|
+| `feat/` | 신규 기능 추가 | `feat/open-pdf-native`, `feat/file-watcher-auto-detect` |
+| `fix/` | 버그 수정 | `fix/bm25-loader-race` |
+| `refactor/` | 리팩터링 | `refactor/pipeline-split` |
+| `docs/` | 문서 변경 | `docs/readme-badges` |
+
+- **slug**: 변경 내용을 2~4단어 kebab-case로 요약
+- 일정 규모 이상(파일 5개↑ 또는 데이터 모델 변경 포함) 작업은 spec을 먼저 작성하고 (A) 형식을 사용한다.
+
+**구분자**: 슬래시(`/`) — Git 네임스페이스 브랜치로 동작 (두 형식 공통)
+
+**적용 범위**: 모든 feature/fix 브랜치 생성 시 (`/speckit-implement`, 수동 브랜치 포함)
 
 ---
 
@@ -133,6 +155,49 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 ```
 
 **적용 범위**: 모든 specs/*/tasks.md 파일
+
+---
+
+### P-08: 데이터 정규화 (Data Normalization)
+
+RDB 스키마 설계 시 제1정규형(1NF)을 준수한다. 반복 그룹·배열·다중 값 JSONB 컬럼으로
+**동일 의미의 데이터를 여러 행에 중복 저장**하거나, **배열 원소를 쿼리 대상**으로 삼지
+않는다. 다대다 관계는 별도 관계 테이블로, 부모-자식 1:1/1:N 관계는 외래 키 + UNIQUE
+제약으로 표현한다.
+
+**예외 허용**: 순수 확장 메타데이터(키마다 이질적 의미를 가지며 WHERE 절 쿼리 대상이
+아닌 경우)는 JSONB 사용 가능.
+
+**위반 감지 기준**:
+- 동일 스키마의 JSONB 값이 같은 부모를 가진 여러 행에 반복 저장되는 경우
+- 배열/JSONB 컬럼의 원소를 WHERE/JOIN에서 직접 조회해야 하는 경우
+
+**적용 범위**: `backend/models/*.py`, `init_db()` 마이그레이션 블록.
+
+**회고 근거**: specs/004-annotation-types-table — `chunks.annotation_types` JSONB가
+동일 문서의 모든 청크에 중복 저장되던 문제를 `document_annotation_types` 1:1 테이블로
+분리하여 해소.
+
+---
+
+### P-09: 외부 파일 변경 처리 (External Mutation Handling)
+
+업로드된 원본 파일(`data/documents/*`)에 대한 외부 수정은 **자동 감지하되 자동 재처리는
+금지**한다. 재처리는 반드시 사용자의 명시적 요청(API 호출 또는 UI 버튼)으로만 실행한다.
+
+**구성 요소**:
+- **감지**: watchdog 파일 이벤트 + SHA-256 해시 비교로 실제 내용 변경만 필터링
+- **표시**: `documents.file_changed` 플래그 + 프론트엔드 UI 배지
+- **반영**: 사용자가 재처리 버튼을 눌러야 `reprocess_document()` 실행
+- **ID 보존**: 재처리 시 문서 ID 및 연관 메타데이터(대화 기록 등) 유지
+
+**근거**: 무의식적 자동 재처리는 LLM 비용 부담과 예상치 못한 인덱스 변경을 초래하며,
+P-03(출처 투명성)에 따른 예측 가능성을 훼손한다.
+
+**적용 범위**: `backend/services/file_watcher.py`, `backend/services/indexer.py`
+(`reprocess_document`), 재처리 API 엔드포인트.
+
+**회고 근거**: specs/003-pdf-edit-reindex, feat/file-watcher-auto-detect.
 
 ---
 
@@ -189,6 +254,8 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 - 새로운 LLM 호출 코드 추가 시 P-01(근거 우선) 시스템 프롬프트 적용 여부를 확인한다.
 - 새로운 컴포넌트 도입 시 P-04(환경변수 전환) 적용 여부를 확인한다.
 - 마일스톤 전환 시 P-05(측정 기반) 평가 스크립트 실행 결과를 기록한다.
+- 새로운 DB 스키마·모델 추가 시 P-08(데이터 정규화) 위반 여부(중복 JSONB, 배열 쿼리 대상)를 확인한다.
+- 원본 파일 변경을 감지·반영하는 코드 추가 시 P-09(외부 파일 변경 처리)에 따라 사용자 확인 경로를 거치는지 확인한다.
 
 ### 버전 이력
 
@@ -198,3 +265,4 @@ task 구현을 위한 브랜치는 반드시 아래 형식을 따른다.
 | 1.1.0 | 2026-04-18 | P-07 Task 완성 상태 표시 규칙 추가 |
 | 1.2.0 | 2026-04-18 | 3절 데이터베이스 제약 SQLite → PostgreSQL 변경 (specs/002-postgres-local-db) |
 | 1.2.1 | 2026-04-18 | 3절 Python 런타임 ≥3.13, 패키지 관리 uv 항목 추가 (pyproject.toml 반영) |
+| 1.3.0 | 2026-04-20 | P-08 데이터 정규화, P-09 외부 파일 변경 처리 원칙 추가; P-06 spec 없는 작업 브랜치 규칙 보완 (specs/003, specs/004, file-watcher, open-pdf-native 회고) |
