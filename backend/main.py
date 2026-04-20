@@ -35,6 +35,36 @@ def on_startup():
     os.makedirs(os.path.join(data_dir, "documents"), exist_ok=True)
     os.makedirs(os.path.join(data_dir, "indexes"), exist_ok=True)
     init_db()
+    _recover_stuck_documents()
+
+
+def _recover_stuck_documents():
+    """서버 재시작 시 처리 중 상태로 남은 문서를 FAILED로 복구한다."""
+    from backend.models.database import SessionLocal
+    from backend.models.document import Document, DocumentStatus
+
+    processing = {
+        DocumentStatus.PENDING,
+        DocumentStatus.EXTRACTING,
+        DocumentStatus.CHUNKING,
+        DocumentStatus.EMBEDDING,
+    }
+    db = SessionLocal()
+    try:
+        stuck = db.query(Document).filter(Document.status.in_(processing)).all()
+        if stuck:
+            for doc in stuck:
+                doc.status = DocumentStatus.FAILED
+                doc.error_message = "서버 재시작으로 인해 처리가 중단되었습니다."
+            db.commit()
+            import logging
+            logging.getLogger(__name__).warning(
+                "startup recovery: %d document(s) reset to FAILED %s",
+                len(stuck),
+                [d.name for d in stuck],
+            )
+    finally:
+        db.close()
 
 
 @app.get("/health")
