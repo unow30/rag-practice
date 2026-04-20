@@ -150,8 +150,6 @@ with st.sidebar:
     processing = [d for d in docs if d["status"] not in ("READY", "FAILED")]
     if processing:
         st.info(f"{len(processing)}개 문서 처리 중... (자동 새로고침)")
-        time.sleep(2)
-        st.rerun()
 
     st.subheader("문서 목록")
     if not docs:
@@ -207,6 +205,10 @@ with st.sidebar:
                 if st.button("🗑", key=f"del_{doc['id']}"):
                     delete_document(doc["id"])
                     st.rerun()
+
+    if processing:
+        time.sleep(2)
+        st.rerun()
 
     st.divider()
 
