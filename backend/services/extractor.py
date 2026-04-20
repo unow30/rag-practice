@@ -35,6 +35,9 @@ def _extract_annotations(page) -> dict:
     buckets: dict = defaultdict(list)
     memo_parts: list[str] = []
 
+    seen_memos: set[tuple] = set()
+    seen_spans: dict[str, set[str]] = defaultdict(set)
+
     for annot in page.annots():
         type_id = annot.type[0]
         if type_id not in _ANNOT_TYPE_MAP:
@@ -46,11 +49,16 @@ def _extract_annotations(page) -> dict:
             if not content:
                 continue
             anchor = page.get_text("text", clip=annot.rect).strip()
+            key = (anchor, content)
+            if key in seen_memos:
+                continue
+            seen_memos.add(key)
             buckets["memo"].append({"anchor": anchor, "content": content})
             memo_parts.append(content)
         else:  # highlight / underline / strikeout
             span = page.get_text("text", clip=annot.rect).strip()
-            if span:
+            if span and span not in seen_spans[label]:
+                seen_spans[label].add(span)
                 buckets[label].append(span)
 
     return {

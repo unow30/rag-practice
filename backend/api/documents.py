@@ -197,24 +197,6 @@ def open_document_native(doc_id: str, db: Session = Depends(get_db)):
     return {"message": "파일을 열었습니다."}
 
 
-@router.get("/{doc_id}/file-status")
-def get_file_status(doc_id: str, db: Session = Depends(get_db)):
-    doc = db.query(Document).filter(Document.id == doc_id).first()
-    if not doc:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "DOCUMENT_NOT_FOUND", "message": "문서를 찾을 수 없습니다."},
-        )
-    if not doc.file_path or not os.path.exists(doc.file_path):
-        return {"changed": False}
-
-    file_mtime = os.path.getmtime(doc.file_path)
-    if doc.processed_at is None:
-        return {"changed": False}
-
-    processed_ts = doc.processed_at.timestamp()
-    return {"changed": file_mtime > processed_ts + 1}  # 1초 여유
-
 
 @router.delete("/{doc_id}", status_code=204)
 def delete_document(doc_id: str, db: Session = Depends(get_db)):
@@ -253,23 +235,41 @@ def _process_document_background(doc_id: str):
     """추출 → 청킹 → 임베딩 → FAISS 인덱싱 전체 파이프라인 (백그라운드 실행)"""
     from backend.models.database import SessionLocal
     from backend.services.indexer import process_document
-    db = SessionLocal()
-    try:
-        with _processing_semaphore:
+    with _processing_semaphore:
+        db = SessionLocal()
+        try:
             process_document(doc_id, db)
-    finally:
-        db.close()
+        except Exception as e:
+            _set_failed(db, doc_id, e)
+        finally:
+            db.close()
 
 
 def _reprocess_document_background(doc_id: str):
     from backend.models.database import SessionLocal
     from backend.services.indexer import reprocess_document
-    db = SessionLocal()
-    try:
-        with _processing_semaphore:
+    with _processing_semaphore:
+        db = SessionLocal()
+        try:
             reprocess_document(doc_id, db)
-    finally:
-        db.close()
+        except Exception as e:
+            _set_failed(db, doc_id, e)
+        finally:
+            db.close()
+
+
+def _set_failed(db, doc_id: str, exc: Exception) -> None:
+    import logging
+    logging.getLogger(__name__).exception("processing failed: %s", doc_id)
+    try:
+        doc = db.query(Document).filter(Document.id == doc_id).first()
+        if doc:
+            db.rollback()
+            doc.status = DocumentStatus.FAILED
+            doc.error_message = str(exc)
+            db.commit()
+    except Exception:
+        pass
 
 
 @router.post("/{doc_id}/reindex", status_code=202)

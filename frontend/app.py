@@ -18,6 +18,8 @@ if "selected_doc_ids" not in st.session_state:
     st.session_state.selected_doc_ids = []
 if "reindexing_doc_ids" not in st.session_state:
     st.session_state.reindexing_doc_ids = set()
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
 
 
 # ── 헬퍼 함수 ────────────────────────────────────────────────────
@@ -45,14 +47,6 @@ def delete_document(doc_id: str):
     except Exception:
         return 500
 
-
-def fetch_file_status(doc_id: str) -> bool:
-    """파일이 마지막 처리 이후 변경되었으면 True를 반환한다."""
-    try:
-        resp = requests.get(f"{API_BASE}/api/documents/{doc_id}/file-status", timeout=5)
-        return resp.json().get("changed", False)
-    except Exception:
-        return False
 
 
 def open_document_native(doc_id: str) -> int:
@@ -110,7 +104,7 @@ with st.sidebar:
         "PDF 파일 업로드 (최대 5개, 50MB)",
         type=["pdf"],
         accept_multiple_files=True,
-        key="uploader",
+        key=f"uploader_{st.session_state.uploader_key}",
     )
     if st.button("업로드", disabled=not uploaded):
         with st.spinner("업로드 중..."):
@@ -123,6 +117,7 @@ with st.sidebar:
             for dup in duplicates:
                 st.warning(f"⚠ {dup['name']} — 이미 업로드된 문서입니다 (중복 제외)")
             if new_docs or duplicates:
+                st.session_state.uploader_key += 1
                 st.rerun()
         else:
             detail = result.get("detail", result)
@@ -164,12 +159,7 @@ with st.sidebar:
         )
         st.session_state.selected_doc_ids = selected
 
-        # READY 문서만 변경 여부 확인 (처리 중인 문서는 제외)
-        changed_ids = {
-            doc["id"]
-            for doc in docs
-            if doc["status"] == "READY" and fetch_file_status(doc["id"])
-        }
+        changed_ids = {doc["id"] for doc in docs if doc.get("file_changed")}
 
         for doc in docs:
             is_changed = doc["id"] in changed_ids
