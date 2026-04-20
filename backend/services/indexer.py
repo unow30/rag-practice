@@ -10,13 +10,19 @@ from langchain.schema import Document
 from sqlalchemy.orm import Session
 
 from backend.models.document import Chunk, ContentType, Document as DocModel, DocumentStatus
-from backend.services.bm25_indexer import build_bm25_index
+from backend.services.bm25_indexer import build_bm25_index, delete_bm25_index
 from backend.services.chunker import split_documents
-from backend.services.embedder import embed_texts
+from backend.services.embedder import get_model as get_embedding_model
 from backend.services.extractor import get_extractor
 
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 INDEXES_DIR = os.path.join(DATA_DIR, "indexes")
+
+_progress: dict[str, int] = {}
+
+
+def get_progress(doc_id: str) -> int:
+    return _progress.get(doc_id, 0)
 
 
 def _content_type_enum(ct_str: str) -> ContentType:
@@ -35,16 +41,21 @@ def process_document(doc_id: str, db: Session) -> None:
         return
 
     try:
+        _progress[doc_id] = 0
+
         # 1. 추출
         doc_record.status = DocumentStatus.EXTRACTING
         db.commit()
+        _progress[doc_id] = 5
 
         extractor = get_extractor()
         raw_docs = extractor.extract(doc_record.file_path, doc_id)
+        _progress[doc_id] = 20
 
         # 2. 청킹
         doc_record.status = DocumentStatus.CHUNKING
         db.commit()
+        _progress[doc_id] = 25
 
         chunks: List[Document] = split_documents(raw_docs)
         doc_record.page_count = max(
@@ -52,13 +63,25 @@ def process_document(doc_id: str, db: Session) -> None:
         )
         doc_record.chunk_count = len(chunks)
         db.commit()
+        _progress[doc_id] = 35
 
         # 3. 임베딩
         doc_record.status = DocumentStatus.EMBEDDING
         db.commit()
 
         texts = [c.page_content for c in chunks]
-        vectors = embed_texts(texts)
+        total = len(texts)
+        all_vectors: list = []
+        batch_size = 32
+        emb_model = get_embedding_model()
+        for i in range(0, total, batch_size):
+            batch = texts[i:i + batch_size]
+            output = emb_model.encode(batch, batch_size=batch_size, max_length=512)
+            all_vectors.extend(output["dense_vecs"].tolist())
+            done = min(i + batch_size, total)
+            _progress[doc_id] = 35 + int(done / total * 50)
+
+        vectors = all_vectors
         dim = len(vectors[0])
         np_vectors = np.array(vectors, dtype="float32")
 
@@ -70,6 +93,7 @@ def process_document(doc_id: str, db: Session) -> None:
         faiss_index.add(np_vectors)
 
         faiss.write_index(faiss_index, os.path.join(index_dir, "index.faiss"))
+        _progress[doc_id] = 88
 
         # chunk_id 매핑 저장
         chunk_records = []
@@ -101,11 +125,13 @@ def process_document(doc_id: str, db: Session) -> None:
 
         # BM25 인덱스 생성
         build_bm25_index(doc_id, texts)
+        _progress[doc_id] = 95
 
         doc_record.index_path = index_dir
         doc_record.status = DocumentStatus.READY
         doc_record.processed_at = datetime.now(timezone.utc)
         db.commit()
+        _progress[doc_id] = 100
 
     except Exception as e:
         db.rollback()
@@ -114,6 +140,7 @@ def process_document(doc_id: str, db: Session) -> None:
             doc_record.status = DocumentStatus.FAILED
             doc_record.error_message = str(e)
             db.commit()
+        _progress.pop(doc_id, None)
 
 
 def reprocess_document(doc_id: str, db: Session) -> None:
@@ -122,6 +149,7 @@ def reprocess_document(doc_id: str, db: Session) -> None:
     if not doc_record:
         return
 
+    _progress[doc_id] = 0
     db.query(Chunk).filter(Chunk.document_id == doc_id).delete()
     db.commit()
 

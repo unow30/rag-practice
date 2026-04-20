@@ -133,6 +133,7 @@ def list_documents(db: Session = Depends(get_db)):
 
 @router.get("/{doc_id}/status")
 def get_document_status(doc_id: str, db: Session = Depends(get_db)):
+    from backend.services.indexer import get_progress
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(
@@ -142,6 +143,7 @@ def get_document_status(doc_id: str, db: Session = Depends(get_db)):
     return {
         "id": doc.id,
         "status": doc.status.value,
+        "progress": get_progress(doc_id),
         "progress_message": _status_message(doc.status),
         "error_message": doc.error_message,
     }

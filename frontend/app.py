@@ -167,6 +167,7 @@ with st.sidebar:
 
         for doc in docs:
             is_changed = doc["id"] in changed_ids
+            is_processing = doc["status"] not in ("READY", "FAILED")
             show_reindex = doc["status"] == "FAILED" or (doc["status"] == "READY" and is_changed)
             col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
             with col1:
@@ -178,6 +179,11 @@ with st.sidebar:
                     f"{round(doc['size_bytes'] / 1024 / 1024, 1)} MB</small>",
                     unsafe_allow_html=True,
                 )
+                if is_processing:
+                    status_info = poll_status(doc["id"])
+                    pct = status_info.get("progress", 0) / 100
+                    msg = status_info.get("progress_message", "")
+                    st.progress(pct, text=msg)
             with col2:
                 if doc["status"] in ("READY", "FAILED"):
                     file_url = f"{API_BASE}/api/documents/{doc['id']}/file"
