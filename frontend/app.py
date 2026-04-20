@@ -167,7 +167,8 @@ with st.sidebar:
 
         for doc in docs:
             is_changed = doc["id"] in changed_ids
-            col1, col2, col3 = st.columns([4, 1, 1])
+            show_reindex = doc["status"] == "FAILED" or (doc["status"] == "READY" and is_changed)
+            col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
             with col1:
                 change_badge = " · 📝 변경됨" if is_changed else ""
                 st.markdown(
@@ -177,25 +178,22 @@ with st.sidebar:
                     f"{round(doc['size_bytes'] / 1024 / 1024, 1)} MB</small>",
                     unsafe_allow_html=True,
                 )
+            with col2:
                 if doc["status"] in ("READY", "FAILED"):
                     file_url = f"{API_BASE}/api/documents/{doc['id']}/file"
-                    st.markdown(
-                        f'<a href="{file_url}" target="_blank" style="font-size:0.75rem;">📄 PDF 열기</a>',
-                        unsafe_allow_html=True,
-                    )
-            with col2:
-                can_reindex = doc["status"] in ("READY", "FAILED")
-                reindex_label = "🔄" if not is_changed else "🔄 갱신"
-                if st.button(reindex_label, key=f"reindex_{doc['id']}", disabled=not can_reindex, help="재처리"):
-                    code = reindex_document(doc["id"])
-                    if code == 202:
-                        st.session_state.reindexing_doc_ids.add(doc["id"])
-                        st.rerun()
-                    elif code == 409:
-                        st.warning("이미 처리 중입니다.")
-                    else:
-                        st.error("재처리 요청에 실패했습니다.")
+                    st.link_button("📄", file_url, help="PDF 열기")
             with col3:
+                if show_reindex:
+                    if st.button("🔄", key=f"reindex_{doc['id']}", help="재처리"):
+                        code = reindex_document(doc["id"])
+                        if code == 202:
+                            st.session_state.reindexing_doc_ids.add(doc["id"])
+                            st.rerun()
+                        elif code == 409:
+                            st.warning("이미 처리 중입니다.")
+                        else:
+                            st.error("재처리 요청에 실패했습니다.")
+            with col4:
                 if st.button("🗑", key=f"del_{doc['id']}"):
                     delete_document(doc["id"])
                     st.rerun()
