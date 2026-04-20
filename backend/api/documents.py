@@ -5,6 +5,7 @@ import threading
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, BackgroundTasks
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from backend.models.database import get_db
@@ -144,6 +145,45 @@ def get_document_status(doc_id: str, db: Session = Depends(get_db)):
         "progress_message": _status_message(doc.status),
         "error_message": doc.error_message,
     }
+
+
+@router.get("/{doc_id}/file")
+def download_document(doc_id: str, db: Session = Depends(get_db)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "DOCUMENT_NOT_FOUND", "message": "문서를 찾을 수 없습니다."},
+        )
+    if not doc.file_path or not os.path.exists(doc.file_path):
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "FILE_NOT_FOUND", "message": "파일을 찾을 수 없습니다."},
+        )
+    return FileResponse(
+        path=doc.file_path,
+        media_type="application/pdf",
+        filename=doc.name,
+    )
+
+
+@router.get("/{doc_id}/file-status")
+def get_file_status(doc_id: str, db: Session = Depends(get_db)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "DOCUMENT_NOT_FOUND", "message": "문서를 찾을 수 없습니다."},
+        )
+    if not doc.file_path or not os.path.exists(doc.file_path):
+        return {"changed": False}
+
+    file_mtime = os.path.getmtime(doc.file_path)
+    if doc.processed_at is None:
+        return {"changed": False}
+
+    processed_ts = doc.processed_at.timestamp()
+    return {"changed": file_mtime > processed_ts + 1}  # 1초 여유
 
 
 @router.delete("/{doc_id}", status_code=204)

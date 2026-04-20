@@ -46,6 +46,15 @@ def delete_document(doc_id: str):
         return 500
 
 
+def fetch_file_status(doc_id: str) -> bool:
+    """파일이 마지막 처리 이후 변경되었으면 True를 반환한다."""
+    try:
+        resp = requests.get(f"{API_BASE}/api/documents/{doc_id}/file-status", timeout=5)
+        return resp.json().get("changed", False)
+    except Exception:
+        return False
+
+
 def reindex_document(doc_id: str) -> int:
     try:
         resp = requests.post(f"{API_BASE}/api/documents/{doc_id}/reindex", timeout=10)
@@ -149,19 +158,35 @@ with st.sidebar:
         )
         st.session_state.selected_doc_ids = selected
 
+        # READY 문서만 변경 여부 확인 (처리 중인 문서는 제외)
+        changed_ids = {
+            doc["id"]
+            for doc in docs
+            if doc["status"] == "READY" and fetch_file_status(doc["id"])
+        }
+
         for doc in docs:
+            is_changed = doc["id"] in changed_ids
             col1, col2, col3 = st.columns([4, 1, 1])
             with col1:
+                change_badge = " · 📝 변경됨" if is_changed else ""
                 st.markdown(
                     f"{_doc_name_html(doc['name'])}  \n"
-                    f"<small>{status_badge(doc['status'])} · "
+                    f"<small>{status_badge(doc['status'])}{change_badge} · "
                     f"{doc.get('page_count') or '?'} 페이지 · "
                     f"{round(doc['size_bytes'] / 1024 / 1024, 1)} MB</small>",
                     unsafe_allow_html=True,
                 )
+                if doc["status"] in ("READY", "FAILED"):
+                    file_url = f"{API_BASE}/api/documents/{doc['id']}/file"
+                    st.markdown(
+                        f'<a href="{file_url}" target="_blank" style="font-size:0.75rem;">📄 PDF 열기</a>',
+                        unsafe_allow_html=True,
+                    )
             with col2:
                 can_reindex = doc["status"] in ("READY", "FAILED")
-                if st.button("🔄", key=f"reindex_{doc['id']}", disabled=not can_reindex, help="재처리"):
+                reindex_label = "🔄" if not is_changed else "🔄 갱신"
+                if st.button(reindex_label, key=f"reindex_{doc['id']}", disabled=not can_reindex, help="재처리"):
                     code = reindex_document(doc["id"])
                     if code == 202:
                         st.session_state.reindexing_doc_ids.add(doc["id"])
