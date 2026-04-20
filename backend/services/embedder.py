@@ -1,7 +1,9 @@
 import os
+import threading
 from typing import List
 
 _model = None
+_model_lock = threading.Lock()
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 BATCH_SIZE = 32
 
@@ -9,8 +11,10 @@ BATCH_SIZE = 32
 def get_model():
     global _model
     if _model is None:
-        from FlagEmbedding import BGEM3FlagModel
-        _model = BGEM3FlagModel(EMBEDDING_MODEL, use_fp16=True)
+        with _model_lock:
+            if _model is None:
+                from FlagEmbedding import BGEM3FlagModel
+                _model = BGEM3FlagModel(EMBEDDING_MODEL, use_fp16=True)
     return _model
 
 

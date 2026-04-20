@@ -193,8 +193,11 @@ if question:
                 timeout=35,
             ) as resp:
                 if resp.status_code != 200:
-                    detail = resp.json().get("detail", {})
-                    error_msg = detail.get("message", "오류가 발생했습니다.")
+                    try:
+                        detail = resp.json().get("detail", {})
+                        error_msg = detail.get("message", "오류가 발생했습니다.") if isinstance(detail, dict) else str(detail)
+                    except Exception:
+                        error_msg = f"서버 오류 ({resp.status_code})"
                 else:
                     for line in resp.iter_lines():
                         if not line:

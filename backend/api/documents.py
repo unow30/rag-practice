@@ -1,6 +1,7 @@
 import hashlib
 import os
 import shutil
+import threading
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, BackgroundTasks
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_DOCUMENT_COUNT = 20
+_processing_semaphore = threading.Semaphore(1)  # 동시 처리 1개로 제한 (모델 동시 로드 방지)
 ALLOWED_MIME_TYPES = {"application/pdf"}
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 DOCUMENTS_DIR = os.path.join(DATA_DIR, "documents")
@@ -183,6 +185,7 @@ def _process_document_background(doc_id: str):
     from backend.services.indexer import process_document
     db = SessionLocal()
     try:
-        process_document(doc_id, db)
+        with _processing_semaphore:
+            process_document(doc_id, db)
     finally:
         db.close()

@@ -19,4 +19,4 @@ test-cov = "pytest backend/tests/ -v --cov=backend --cov-report=term-missing"
 eval     = "python evaluation/run_eval.py"
 
 # 의존성 설치
-install  = "pip install -r requirements.txt"
+install  = "uv pip install -r requirements.txt"
