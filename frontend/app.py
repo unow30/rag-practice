@@ -55,6 +55,14 @@ def fetch_file_status(doc_id: str) -> bool:
         return False
 
 
+def open_document_native(doc_id: str) -> int:
+    try:
+        resp = requests.post(f"{API_BASE}/api/documents/{doc_id}/open", timeout=5)
+        return resp.status_code
+    except Exception:
+        return 500
+
+
 def reindex_document(doc_id: str) -> int:
     try:
         resp = requests.post(f"{API_BASE}/api/documents/{doc_id}/reindex", timeout=10)
@@ -142,8 +150,6 @@ with st.sidebar:
     processing = [d for d in docs if d["status"] not in ("READY", "FAILED")]
     if processing:
         st.info(f"{len(processing)}개 문서 처리 중... (자동 새로고침)")
-        time.sleep(2)
-        st.rerun()
 
     st.subheader("문서 목록")
     if not docs:
@@ -180,8 +186,10 @@ with st.sidebar:
                 )
             with col2:
                 if doc["status"] in ("READY", "FAILED"):
-                    file_url = f"{API_BASE}/api/documents/{doc['id']}/file"
-                    st.link_button("📄", file_url, help="PDF 열기")
+                    if st.button("📄", key=f"open_{doc['id']}", help="PDF 열기"):
+                        code = open_document_native(doc["id"])
+                        if code != 200:
+                            st.error("파일을 열 수 없습니다.")
             with col3:
                 if show_reindex:
                     if st.button("🔄", key=f"reindex_{doc['id']}", help="재처리"):
@@ -197,6 +205,10 @@ with st.sidebar:
                 if st.button("🗑", key=f"del_{doc['id']}"):
                     delete_document(doc["id"])
                     st.rerun()
+
+    if processing:
+        time.sleep(2)
+        st.rerun()
 
     st.divider()
 

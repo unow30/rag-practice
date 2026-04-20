@@ -148,7 +148,7 @@ def get_document_status(doc_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{doc_id}/file")
-def download_document(doc_id: str, db: Session = Depends(get_db)):
+def view_document(doc_id: str, db: Session = Depends(get_db)):
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(
@@ -163,8 +163,38 @@ def download_document(doc_id: str, db: Session = Depends(get_db)):
     return FileResponse(
         path=doc.file_path,
         media_type="application/pdf",
-        filename=doc.name,
+        headers={"Content-Disposition": f"inline; filename*=UTF-8''{doc.name}"},
     )
+
+
+@router.post("/{doc_id}/open")
+def open_document_native(doc_id: str, db: Session = Depends(get_db)):
+    """서버 머신의 기본 PDF 앱으로 파일을 연다 (로컬 개발 환경용)."""
+    import subprocess
+    import sys
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "DOCUMENT_NOT_FOUND", "message": "문서를 찾을 수 없습니다."},
+        )
+    if not doc.file_path or not os.path.exists(doc.file_path):
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "FILE_NOT_FOUND", "message": "파일을 찾을 수 없습니다."},
+        )
+
+    if sys.platform == "darwin":
+        subprocess.Popen(["open", doc.file_path])
+    elif sys.platform.startswith("linux"):
+        subprocess.Popen(["xdg-open", doc.file_path])
+    elif sys.platform == "win32":
+        subprocess.Popen(["start", doc.file_path], shell=True)
+    else:
+        raise HTTPException(status_code=500, detail={"error": "UNSUPPORTED_OS", "message": "지원하지 않는 운영체제입니다."})
+
+    return {"message": "파일을 열었습니다."}
 
 
 @router.get("/{doc_id}/file-status")
