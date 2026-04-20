@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
@@ -84,6 +85,8 @@ class Chunk(Base):
     version = Column(String(64), nullable=True)
     token_count = Column(Integer, nullable=False, default=0)
     faiss_index_id = Column(Integer, nullable=True)
+    annotation_types = Column(Text, nullable=True)
+    memo_content = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_now)
 
     document = relationship("Document", back_populates="chunks")
@@ -97,4 +100,7 @@ class Chunk(Base):
             "version": self.version,
             "chunk_id": self.id,
             "content_type": self.content_type.value if self.content_type else None,
+            "annotations": json.loads(self.annotation_types) if self.annotation_types else {},
+            "annotation_types": list(json.loads(self.annotation_types).keys()) if self.annotation_types else [],
+            "memo_content": self.memo_content,
         }

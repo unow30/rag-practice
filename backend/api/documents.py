@@ -189,3 +189,46 @@ def _process_document_background(doc_id: str):
             process_document(doc_id, db)
     finally:
         db.close()
+
+
+def _reprocess_document_background(doc_id: str):
+    from backend.models.database import SessionLocal
+    from backend.services.indexer import reprocess_document
+    db = SessionLocal()
+    try:
+        with _processing_semaphore:
+            reprocess_document(doc_id, db)
+    finally:
+        db.close()
+
+
+@router.post("/{doc_id}/reindex", status_code=202)
+def reindex_document(
+    doc_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "DOCUMENT_NOT_FOUND", "message": "문서를 찾을 수 없습니다."},
+        )
+
+    processing_statuses = {
+        DocumentStatus.PENDING,
+        DocumentStatus.EXTRACTING,
+        DocumentStatus.CHUNKING,
+        DocumentStatus.EMBEDDING,
+    }
+    if doc.status in processing_statuses:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "ALREADY_PROCESSING", "message": "이미 처리 중인 문서입니다."},
+        )
+
+    doc.status = DocumentStatus.PENDING
+    db.commit()
+
+    background_tasks.add_task(_reprocess_document_background, doc_id)
+    return {"id": doc.id, "status": doc.status.value, "message": "재처리가 시작되었습니다."}

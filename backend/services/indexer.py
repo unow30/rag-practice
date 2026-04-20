@@ -1,5 +1,7 @@
+import json
 import os
 import pickle
+import shutil
 from datetime import datetime, timezone
 from typing import List
 
@@ -74,6 +76,8 @@ def process_document(doc_id: str, db: Session) -> None:
         id_map = []
         for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
             meta = chunk.metadata
+            raw_annot = meta.get("annotations")
+            annotation_types_json = json.dumps(raw_annot, ensure_ascii=False) if raw_annot else None
             cr = Chunk(
                 document_id=doc_id,
                 chunk_index=meta.get("chunk_index", i),
@@ -84,6 +88,8 @@ def process_document(doc_id: str, db: Session) -> None:
                 version=meta.get("version"),
                 token_count=len(chunk.page_content.split()),
                 faiss_index_id=i,
+                annotation_types=annotation_types_json,
+                memo_content=meta.get("memo_content"),
             )
             db.add(cr)
             db.flush()
@@ -108,3 +114,23 @@ def process_document(doc_id: str, db: Session) -> None:
             doc_record.status = DocumentStatus.FAILED
             doc_record.error_message = str(e)
             db.commit()
+
+
+def reprocess_document(doc_id: str, db: Session) -> None:
+    """기존 청크·인덱스를 삭제하고 처리 파이프라인을 재실행한다."""
+    doc_record = db.query(DocModel).filter(DocModel.id == doc_id).first()
+    if not doc_record:
+        return
+
+    db.query(Chunk).filter(Chunk.document_id == doc_id).delete()
+    db.commit()
+
+    if doc_record.index_path and os.path.exists(doc_record.index_path):
+        shutil.rmtree(doc_record.index_path, ignore_errors=True)
+
+    delete_bm25_index(doc_id)
+
+    doc_record.index_path = None
+    db.commit()
+
+    process_document(doc_id, db)

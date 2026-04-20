@@ -16,6 +16,8 @@ if "conversation_id" not in st.session_state:
     st.session_state.conversation_id = None
 if "selected_doc_ids" not in st.session_state:
     st.session_state.selected_doc_ids = []
+if "reindexing_doc_ids" not in st.session_state:
+    st.session_state.reindexing_doc_ids = set()
 
 
 # ── 헬퍼 함수 ────────────────────────────────────────────────────
@@ -39,6 +41,14 @@ def upload_files(files):
 def delete_document(doc_id: str):
     try:
         resp = requests.delete(f"{API_BASE}/api/documents/{doc_id}", timeout=5)
+        return resp.status_code
+    except Exception:
+        return 500
+
+
+def reindex_document(doc_id: str) -> int:
+    try:
+        resp = requests.post(f"{API_BASE}/api/documents/{doc_id}/reindex", timeout=10)
         return resp.status_code
     except Exception:
         return 500
@@ -106,6 +116,20 @@ with st.sidebar:
 
     # 문서 목록
     docs = fetch_documents()
+    docs_by_id = {d["id"]: d for d in docs}
+
+    # 재처리 완료/실패 알림
+    finished = set()
+    for doc_id in st.session_state.reindexing_doc_ids:
+        doc = docs_by_id.get(doc_id)
+        if doc and doc["status"] == "READY":
+            st.success(f"✓ '{doc['name']}' 재처리가 완료되었습니다.")
+            finished.add(doc_id)
+        elif doc and doc["status"] == "FAILED":
+            st.error(f"✗ '{doc['name']}' 재처리에 실패했습니다.")
+            finished.add(doc_id)
+    st.session_state.reindexing_doc_ids -= finished
+
     processing = [d for d in docs if d["status"] not in ("READY", "FAILED")]
     if processing:
         st.info(f"{len(processing)}개 문서 처리 중... (자동 새로고침)")
@@ -126,7 +150,7 @@ with st.sidebar:
         st.session_state.selected_doc_ids = selected
 
         for doc in docs:
-            col1, col2 = st.columns([4, 1])
+            col1, col2, col3 = st.columns([4, 1, 1])
             with col1:
                 st.markdown(
                     f"{_doc_name_html(doc['name'])}  \n"
@@ -136,6 +160,17 @@ with st.sidebar:
                     unsafe_allow_html=True,
                 )
             with col2:
+                can_reindex = doc["status"] in ("READY", "FAILED")
+                if st.button("🔄", key=f"reindex_{doc['id']}", disabled=not can_reindex, help="재처리"):
+                    code = reindex_document(doc["id"])
+                    if code == 202:
+                        st.session_state.reindexing_doc_ids.add(doc["id"])
+                        st.rerun()
+                    elif code == 409:
+                        st.warning("이미 처리 중입니다.")
+                    else:
+                        st.error("재처리 요청에 실패했습니다.")
+            with col3:
                 if st.button("🗑", key=f"del_{doc['id']}"):
                     delete_document(doc["id"])
                     st.rerun()
